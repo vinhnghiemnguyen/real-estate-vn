@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import type { Project } from '../../types';
-import { Search, MapPin, Building, DollarSign, Filter, X } from 'lucide-react';
+import { Search, MapPin, Building, DollarSign, Filter, X, ChevronLeft, ChevronRight, ExternalLink, Map as MapIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PriceChart from '../Charts/PriceChart';
 
@@ -32,6 +32,7 @@ const Sidebar = ({
 }: SidebarProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showFilters, setShowFilters] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     const filteredProjects = useMemo(() => {
         return projects.filter(p =>
@@ -50,188 +51,214 @@ const Sidebar = ({
     }, [filterOptions.investors, filters.minProjects]);
 
     return (
-        <div className="flex flex-col h-full bg-white/90 backdrop-blur-md border-r border-slate-200 shadow-2xl z-10 w-full max-w-md">
-            <div className="p-6 border-b border-slate-100">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent mb-4">
-                    Real Estate Map
-                </h1>
+        <div className={`flex flex-col h-full bg-white/90 backdrop-blur-md border-r border-slate-200 shadow-2xl z-10 transition-all duration-300 relative ${isCollapsed ? 'w-0' : 'w-full max-w-md'}`}>
+            <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="absolute -right-8 top-1/2 -translate-y-1/2 bg-white p-1.5 rounded-r-lg shadow-md border border-l-0 border-slate-200 text-slate-500 hover:text-primary-600 hover:bg-slate-50 transition-colors z-50"
+                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+                {isCollapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+            </button>
 
-                <div className="space-y-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            placeholder="Search projects..."
-                            className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-primary-500/20 transition-all outline-none text-slate-700 font-medium placeholder:text-slate-400"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${showFilters ? 'bg-primary-100 text-primary-600' : 'hover:bg-slate-200 text-slate-500'}`}
-                        >
-                            <Filter className="w-4 h-4" />
-                        </button>
-                    </div>
+            <div className={`flex flex-col h-full overflow-hidden ${isCollapsed ? 'opacity-0 invisible' : 'opacity-100 visible'} transition-all duration-300`}>
+                <div className="p-6 border-b border-slate-100">
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent mb-4">
+                        Real Estate Map
+                    </h1>
 
-                    <AnimatePresence>
-                        {showFilters && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                className="space-y-3 overflow-hidden"
-                            >
-                                <div className="grid grid-cols-2 gap-2">
-                                    <select
-                                        className="w-full p-2 bg-slate-50 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary-500/20 outline-none"
-                                        value={filters.province}
-                                        onChange={(e) => onFilterChange('province', e.target.value)}
-                                    >
-                                        <option value="">All Provinces</option>
-                                        {filterOptions.provinces.map(p => (
-                                            <option key={p} value={p}>{p}</option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        className="w-full p-2 bg-slate-50 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary-500/20 outline-none"
-                                        value={filters.district}
-                                        onChange={(e) => onFilterChange('district', e.target.value)}
-                                        disabled={!filters.province}
-                                    >
-                                        <option value="">All Districts</option>
-                                        {availableDistricts.map(d => (
-                                            <option key={d} value={d}>{d}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="space-y-1">
-                                    <label className="text-xs text-slate-500 font-medium ml-1">
-                                        Min Projects per Investor: {filters.minProjects}
-                                    </label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="20"
-                                        step="1"
-                                        value={filters.minProjects}
-                                        onChange={(e) => onFilterChange('minProjects', parseInt(e.target.value))}
-                                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
-                                    />
-                                </div>
-
-                                <select
-                                    className="w-full p-2 bg-slate-50 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary-500/20 outline-none"
-                                    value={filters.investor}
-                                    onChange={(e) => onFilterChange('investor', e.target.value)}
-                                >
-                                    <option value="">All Investors</option>
-                                    {filteredInvestors.map(i => (
-                                        <option key={i.name} value={i.name}>{i.name} ({i.count})</option>
-                                    ))}
-                                </select>
-
-                                {(filters.province || filters.district || filters.investor || filters.minProjects > 0) && (
-                                    <button
-                                        onClick={() => {
-                                            onFilterChange('province', '');
-                                            onFilterChange('district', '');
-                                            onFilterChange('investor', '');
-                                            onFilterChange('minProjects', 0);
-                                        }}
-                                        className="text-xs text-primary-600 hover:text-primary-700 flex items-center"
-                                    >
-                                        <X className="w-3 h-3 mr-1" /> Clear Filters
-                                    </button>
-                                )}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
-                {selectedProject && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mb-6 bg-white rounded-xl border border-primary-100 shadow-lg p-4 sticky top-0 z-10"
-                    >
-                        <div className="flex justify-between items-start mb-2">
-                            <h2 className="text-xl font-bold text-slate-800">{selectedProject.name}</h2>
+                    <div className="space-y-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                            <input
+                                type="text"
+                                placeholder="Search projects..."
+                                className="w-full pl-10 pr-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-primary-500/20 transition-all outline-none text-slate-700 font-medium placeholder:text-slate-400"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                             <button
-                                onClick={() => onSelectProject(null as any)}
-                                className="text-slate-400 hover:text-slate-600"
+                                onClick={() => setShowFilters(!showFilters)}
+                                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${showFilters ? 'bg-primary-100 text-primary-600' : 'hover:bg-slate-200 text-slate-500'}`}
                             >
-                                <X className="w-5 h-5" />
+                                <Filter className="w-4 h-4" />
                             </button>
                         </div>
 
-                        <div className="space-y-2 text-sm text-slate-600">
-                            <p><span className="font-semibold">Location:</span> {selectedProject.district}, {selectedProject.province}</p>
-                            {selectedProject.investor && <p><span className="font-semibold">Investor:</span> {selectedProject.investor}</p>}
-                            {selectedProject.area && <p><span className="font-semibold">Area:</span> {selectedProject.area}</p>}
-                            {selectedProject.priceRange && <p className="text-primary-600 font-semibold">{selectedProject.priceRange}</p>}
-                            {selectedProject.url && (
-                                <a href={selectedProject.url} target="_blank" rel="noopener noreferrer" className="text-primary-500 hover:underline block mt-1">
-                                    View Details
-                                </a>
+                        <AnimatePresence>
+                            {showFilters && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    className="space-y-3 overflow-hidden"
+                                >
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <select
+                                            className="w-full p-2 bg-slate-50 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary-500/20 outline-none"
+                                            value={filters.province}
+                                            onChange={(e) => onFilterChange('province', e.target.value)}
+                                        >
+                                            <option value="">All Provinces</option>
+                                            {filterOptions.provinces.map(p => (
+                                                <option key={p} value={p}>{p}</option>
+                                            ))}
+                                        </select>
+
+                                        <select
+                                            className="w-full p-2 bg-slate-50 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary-500/20 outline-none"
+                                            value={filters.district}
+                                            onChange={(e) => onFilterChange('district', e.target.value)}
+                                            disabled={!filters.province}
+                                        >
+                                            <option value="">All Districts</option>
+                                            {availableDistricts.map(d => (
+                                                <option key={d} value={d}>{d}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs text-slate-500 font-medium ml-1">
+                                            Min Projects per Investor: {filters.minProjects}
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="20"
+                                            step="1"
+                                            value={filters.minProjects}
+                                            onChange={(e) => onFilterChange('minProjects', parseInt(e.target.value))}
+                                            className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                                        />
+                                    </div>
+
+                                    <select
+                                        className="w-full p-2 bg-slate-50 rounded-lg text-sm border-none focus:ring-2 focus:ring-primary-500/20 outline-none"
+                                        value={filters.investor}
+                                        onChange={(e) => onFilterChange('investor', e.target.value)}
+                                    >
+                                        <option value="">All Investors</option>
+                                        {filteredInvestors.map(i => (
+                                            <option key={i.name} value={i.name}>{i.name} ({i.count})</option>
+                                        ))}
+                                    </select>
+
+                                    {(filters.province || filters.district || filters.investor || filters.minProjects > 0) && (
+                                        <button
+                                            onClick={() => {
+                                                onFilterChange('province', '');
+                                                onFilterChange('district', '');
+                                                onFilterChange('investor', '');
+                                                onFilterChange('minProjects', 0);
+                                            }}
+                                            className="text-xs text-primary-600 hover:text-primary-700 flex items-center"
+                                        >
+                                            <X className="w-3 h-3 mr-1" /> Clear Filters
+                                        </button>
+                                    )}
+                                </motion.div>
                             )}
-                        </div>
+                        </AnimatePresence>
+                    </div>
+                </div>
 
-                        {selectedProject.priceHistory && (
-                            <PriceChart project={selectedProject} />
-                        )}
-                    </motion.div>
-                )}
-
-                {filteredProjects.map((project) => (
-                    <motion.div
-                        key={project.id}
-                        layoutId={project.id}
-                        onClick={() => onSelectProject(project)}
-                        className={`
-              p-4 rounded-xl cursor-pointer transition-all duration-200 border
-              ${selectedProject?.id === project.id
-                                ? 'bg-primary-50 border-primary-200 shadow-md ring-1 ring-primary-200'
-                                : 'bg-white border-slate-100 hover:border-primary-100 hover:shadow-sm'
-                            }
-            `}
-                    >
-                        <h3 className={`font-bold text-lg mb-2 ${selectedProject?.id === project.id ? 'text-primary-700' : 'text-slate-800'}`}>
-                            {project.name}
-                        </h3>
-
-                        <div className="space-y-2">
-                            <div className="flex items-center text-sm text-slate-500">
-                                <MapPin className="w-4 h-4 mr-2 shrink-0" />
-                                <span className="truncate">{project.district}, {project.province}</span>
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                    {selectedProject && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-6 bg-white rounded-xl border border-primary-100 shadow-lg p-4 sticky top-0 z-10"
+                        >
+                            <div className="flex justify-between items-start mb-2">
+                                <h2 className="text-xl font-bold text-slate-800">{selectedProject.name}</h2>
+                                <button
+                                    onClick={() => onSelectProject(null as any)}
+                                    className="text-slate-400 hover:text-slate-600"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
 
-                            {project.area && (
+                            <div className="space-y-2 text-sm text-slate-600">
+                                <p><span className="font-semibold">Location:</span> {selectedProject.district}, {selectedProject.province}</p>
+                                {selectedProject.investor && <p><span className="font-semibold">Investor:</span> {selectedProject.investor}</p>}
+                                {selectedProject.area && <p><span className="font-semibold">Area:</span> {selectedProject.area}</p>}
+                                {selectedProject.priceRange && <p className="text-primary-600 font-semibold">{selectedProject.priceRange}</p>}
+
+                                <div className="flex gap-2 mt-3 pt-2 border-t border-slate-100">
+                                    {selectedProject.url && (
+                                        <a
+                                            href={selectedProject.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center text-primary-600 hover:text-primary-700 font-medium text-xs"
+                                        >
+                                            <ExternalLink className="w-3 h-3 mr-1" /> Project Details
+                                        </a>
+                                    )}
+                                    <a
+                                        href={`https://www.google.com/maps/search/?api=1&query=${selectedProject.lat},${selectedProject.lng}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center text-blue-600 hover:text-blue-700 font-medium text-xs"
+                                    >
+                                        <MapIcon className="w-3 h-3 mr-1" /> View in Google Maps
+                                    </a>
+                                </div>
+                            </div>
+
+                            {selectedProject.priceHistory && (
+                                <PriceChart project={selectedProject} />
+                            )}
+                        </motion.div>
+                    )}
+
+                    {filteredProjects.map((project) => (
+                        <motion.div
+                            key={project.id}
+                            layoutId={project.id}
+                            onClick={() => onSelectProject(project)}
+                            className={`
+                p-4 rounded-xl cursor-pointer transition-all duration-200 border
+                ${selectedProject?.id === project.id
+                                    ? 'bg-primary-50 border-primary-200 shadow-md ring-1 ring-primary-200'
+                                    : 'bg-white border-slate-100 hover:border-primary-100 hover:shadow-sm'
+                                }
+              `}
+                        >
+                            <h3 className={`font-bold text-lg mb-2 ${selectedProject?.id === project.id ? 'text-primary-700' : 'text-slate-800'}`}>
+                                {project.name}
+                            </h3>
+
+                            <div className="space-y-2">
                                 <div className="flex items-center text-sm text-slate-500">
-                                    <Building className="w-4 h-4 mr-2 shrink-0" />
-                                    <span>{project.area}</span>
+                                    <MapPin className="w-4 h-4 mr-2 shrink-0" />
+                                    <span className="truncate">{project.district}, {project.province}</span>
                                 </div>
-                            )}
 
-                            {project.priceRange && (
-                                <div className="flex items-center text-sm font-medium text-primary-600">
-                                    <DollarSign className="w-4 h-4 mr-2 shrink-0" />
-                                    <span>{project.priceRange}</span>
-                                </div>
-                            )}
+                                {project.area && (
+                                    <div className="flex items-center text-sm text-slate-500">
+                                        <Building className="w-4 h-4 mr-2 shrink-0" />
+                                        <span>{project.area}</span>
+                                    </div>
+                                )}
+
+                                {project.priceRange && (
+                                    <div className="flex items-center text-sm font-medium text-primary-600">
+                                        <DollarSign className="w-4 h-4 mr-2 shrink-0" />
+                                        <span>{project.priceRange}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    ))}
+
+                    {filteredProjects.length === 0 && (
+                        <div className="text-center py-12 text-slate-400">
+                            <p>No projects found matching your search.</p>
                         </div>
-                    </motion.div>
-                ))}
-
-                {filteredProjects.length === 0 && (
-                    <div className="text-center py-12 text-slate-400">
-                        <p>No projects found matching your search.</p>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
