@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  @apply bg-slate-50 text-slate-900;
+}
+
+/* Leaflet Customization */
+.leaflet-popup-content-wrapper {
+  @apply rounded-xl shadow-xl border border-slate-100 p-0 overflow-hidden;
+}
+
+.leaflet-popup-content {
+  @apply m-0 w-64;
+}
+
+.leaflet-container {
+  @apply font-sans;
+}
